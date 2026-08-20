@@ -1,0 +1,81 @@
+Day 7 – Spring Cloud Config
+-----------------------------------------------------------------------------------------------------
+1. Create Config Repository
+Created a separate GitHub repository for configuration.
+Configuration is stored outside the microservices.
+-----------------------------------------------------------------------------------------------------
+2. Create Config Server
+Created a Spring Cloud Config Server.
+Config Server runs on port 8888.
+It reads configuration from the GitHub Config Repository.
+GitHub Config Repo
+        ↓
+Config Server :8888
+-----------------------------------------------------------------------------------------------------
+3. Connect User Service
+Added Spring Cloud Config Client dependency.
+Connected User Service to Config Server.
+User Service uses:
+spring.config.import=optional:configserver:http://localhost:8888
+-----------------------------------------------------------------------------------------------------
+4. User Service gets configuration
+Used:
+spring.application.name=user-service
+Config Server identifies User Service and provides its configuration.
+Verified using /users/config.
+-----------------------------------------------------------------------------------------------------
+5. Move real setting to Config Server
+Moved : server.port=8081 
+from User Service's application.properties 
+to : USER-SERVICE-dev.properties
+So the port is now controlled centrally.
+-----------------------------------------------------------------------------------------------------
+6. DEV and TEST configurations
+
+Created:
+USER-SERVICE-dev.properties
+USER-SERVICE-test.properties
+
+DEV:
+Hello from DEV Config Server
+TEST:
+Hello from TEST Config Server
+
+Changed:
+spring.profiles.active=dev
+to:
+spring.profiles.active=test
+and verified the different values.
+-----------------------------------------------------------------------------------------------------
+7. Config Server Failure Test
+Stopped Config Server.
+Started User Service.
+User Service couldn't retrieve app.message.
+Application failed because the required configuration was unavailable.
+-----------------------------------------------------------------------------------------------------
+8. Connect Order Service
+Added Config Client dependency to Order Service.
+Connected it to Config Server.
+Created:
+ORDER-SERVICE-dev.properties
+ORDER-SERVICE-test.properties
+Moved Order Service's port and user.service.base-url configuration to Config Server.
+-----------------------------------------------------------------------------------------------------
+Final Architecture :
+                 GitHub
+            Config Repository
+                   ↓
+           Config Server :8888
+              ↙          ↘
+     User Service       Order Service
+        :8081                :8082
+
+
+
+
+
+
+
+
+
+
