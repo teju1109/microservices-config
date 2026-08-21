@@ -1,0 +1,88 @@
+Day 8 — Microservices Resilience Notes
+
+1. Verified Microservices Setup
+Started Config Server
+Started Eureka Discovery Server
+Started API Gateway
+Started Order Service
+Started User Service
+Verified services in Eureka Dashboard
+-------------------------------------------------------------------------------------------------------
+2. Verified Service Communication
+Client
+   ↓
+API Gateway
+   ↓
+Order Service
+   ↓
+User Service
+Tested Order API through Postman
+Got SUCCESS response.
+-------------------------------------------------------------------------------------------------------
+3. Circuit Breaker
+Order Service already had Circuit Breaker implementation.
+Circuit Breaker protects Order Service when User Service fails.
+Added/used fallback response:
+User Service is currently unavailable
+When User Service was stopped, API returned:
+503 Service Unavailable
+-------------------------------------------------------------------------------------------------------
+4. Added Resilience4j Retry
+
+Added @Retry to UserClient.java.
+
+@Retry(name = "userService")
+public UserResponse getUserById(Long userId) {...}
+This means:
+Order Service
+      ↓
+Try User Service
+      ↓
+Failure
+      ↓
+Retry
+      ↓
+Failure
+      ↓
+Retry
+      ↓
+Fallback
+-------------------------------------------------------------------------------------------------------
+5. Retry Configuration : 
+
+Added configuration to Config Server → ORDER-SERVICE-dev.properties:
+resilience4j.retry.instances.userService.maxAttempts=3
+resilience4j.retry.instances.userService.waitDuration=500ms
+logging.level.io.github.resilience4j.retry=DEBUG
+-------------------------------------------------------------------------------------------------------
+6. Removed Manual Retry
+UserClient.java originally had a manual for loop for retry.
+We removed that.
+Replaced it with Resilience4j @Retry.
+-------------------------------------------------------------------------------------------------------
+7. Tested Failure Scenario
+Stopped User Service.
+Sent Order API request.
+User Service failed.
+Retry was triggered.
+Console showed multiple calls:
+>>> Calling User Service for userId: 1001
+>>> Calling User Service for userId: 1001
+>>> Calling User Service for userId: 1001
+>>> Calling User Service for userId: 1001
+-------------------------------------------------------------------------------------------------------
+8. Tested Recovery
+Started User Service again.
+Verified it registered with Eureka.
+Sent the Order API request again.
+Got SUCCESS.
+Important Files We Modified
+
+Order Service → UserClient.java
+
+Added Resilience4j @Retry.
+
+Config Server → ORDER-SERVICE-dev.properties
+
+Added Retry configuration.
+Added Retry debug logging.
